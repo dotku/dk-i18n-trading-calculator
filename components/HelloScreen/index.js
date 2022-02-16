@@ -1,9 +1,9 @@
 import { View, Text } from "react-native";
 
-export default function HelloScreen() {
+export default function HelloScreen({ content }) {
   return (
     <View>
-      <Text>Hello</Text>
+      <Text>{content || "Hello"}</Text>
     </View>
   );
 }
