@@ -30,8 +30,6 @@ const profitTypeOptions = {
 };
 
 export default function HomeScreen({ navigation }) {
-  const store = useContext(Store);
-  console.log("store", store);
   const defaultFromValue = 10000.0;
   const defaultFromCode = "CNY";
   const defaultToCode = "USD";

@@ -12,33 +12,26 @@ export const Store = createContext();
 
 function App() {
   return (
-    <Store.Provider
-      value={{
-        fromCode: CURRENCY_CODES.CNY,
-        toCode: CURRENCY_CODES.USD,
-      }}
-    >
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{
-              title: "International Trading Calculator",
-              headerTitleAlign: "center",
-            }}
-          />
-          <Stack.Screen
-            name="CurrencyPicker"
-            component={CurrencyPickerScreen}
-            options={{
-              title: "International Trading Calculator",
-              headerTitleAlign: "center",
-            }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </Store.Provider>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{
+            title: "International Trading Calculator",
+            headerTitleAlign: "center",
+          }}
+        />
+        <Stack.Screen
+          name="CurrencyPicker"
+          component={CurrencyPickerScreen}
+          options={{
+            title: "International Trading Calculator",
+            headerTitleAlign: "center",
+          }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
