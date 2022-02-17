@@ -1,14 +1,9 @@
-import { Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React, { createContext } from "react";
 import HomeScreen from "./components/HomeScreen";
-import CurrencyPickerScreen from "./components/CurrencePicker/CurrencyPickerScreen";
-import { CURRENCY_CODES } from "./constants";
+import HelloScreen from "./components/HelloScreen";
 
 const Stack = createNativeStackNavigator();
-
-export const Store = createContext();
 
 function App() {
   return (
@@ -23,13 +18,21 @@ function App() {
           }}
         />
         <Stack.Screen
+          name="Hello"
+          component={HelloScreen}
+          options={{
+            title: "Hello Screen",
+          }}
+        />
+        {/*
+        <Stack.Screen
           name="CurrencyPicker"
           component={CurrencyPickerScreen}
           options={{
             title: "International Trading Calculator",
             headerTitleAlign: "center",
           }}
-        />
+        /> */}
       </Stack.Navigator>
     </NavigationContainer>
   );
