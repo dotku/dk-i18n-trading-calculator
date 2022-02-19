@@ -8,7 +8,7 @@ export function formatter(currency) {
 }
 
 export function getNumberPad(): string {
-  return Platform.OS === "android" ? "numeric" : "number-pad";
+  return "numeric";
 }
 
 export function resetToNumber(s): number {
