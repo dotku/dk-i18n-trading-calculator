@@ -14,3 +14,10 @@ export function getNumberPad(): string {
 export function resetToNumber(s): number {
   return isNaN(s) ? 0 : parseFloat(s);
 }
+
+export function setFloatValue(v, fun): void {
+  if (v.match(/\./g).length > 1) return null;
+  if (/\d|\./.test(v[v.length - 1])) {
+    fun(v);
+  }
+}

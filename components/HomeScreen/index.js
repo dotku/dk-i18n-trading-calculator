@@ -1,26 +1,41 @@
 import { StatusBar } from "expo-status-bar";
-import { useContext, useEffect, useState } from "react";
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-  Pressable,
-  Linking,
-} from "react-native";
-import { TextInput, RadioButton, Button, Modal } from "react-native-paper";
+import { useEffect, useRef, useState } from "react";
+import { Platform, StyleSheet, Text, View } from "react-native";
+import { TextInput, RadioButton, Button } from "react-native-paper";
 import axios from "axios";
-import { Ionicons } from "@expo/vector-icons";
 import { CURRENCY_CODES, CONVERSATION_RATES } from "../../constants";
 import { launchURL } from "../../utils/devices";
-import { FontAwesome } from "@expo/vector-icons";
-import { formatter } from "../../utils/number";
-import { TouchableOpacity } from "react-native-gesture-handler";
-import { Store } from "../../App";
+import { formatter, getNumberPad, setFloatValue } from "../../utils/number";
+import CurrencyPickerScreen from "../CurrencePicker/CurrencyPickerScreen";
+import { CommonStyles } from "../../styles";
+
+function debounce(func, wait, immediate) {
+  var timeout;
+
+  return function executedFunction() {
+    var context = this;
+    var args = arguments;
+
+    var later = function () {
+      timeout = null;
+      if (!immediate) func.apply(context, args);
+    };
+
+    var callNow = immediate && !timeout;
+
+    clearTimeout(timeout);
+
+    timeout = setTimeout(later, wait);
+
+    if (callNow) func.apply(context, args);
+  };
+}
 
 function getTargetValueByRate({ fromValue, fromCode, toCode, rates }) {
+  // debugger;
   // console.log(CONVERSATION_RATES);
-  // rates = rates || conversionRates;
+  rates = rates || CONVERSATION_RATES;
+  console.log("from/to", fromCode, toCode, rates[toCode] / rates[fromCode]);
   return fromValue * (rates[toCode] / rates[fromCode]);
 }
 
@@ -29,24 +44,51 @@ const profitTypeOptions = {
   dollar: "dollar",
 };
 
-export default function HomeScreen({ navigation }) {
-  const defaultFromValue = 10000.0;
-  const defaultFromCode = "CNY";
-  const defaultToCode = "USD";
-  const defaultProfitPercentage = 5;
-  const defaultToValue = getTargetValueByRate({
-    fromValue: defaultFromValue,
-    fromCode: defaultFromCode,
-    toCode: defaultToCode,
-    rates: CONVERSATION_RATES,
-  });
-  const [value, setValue] = useState("first");
-  const [modalVisible, setModalVisible] = useState(false);
+const pickerForOptions = {
+  fromCode: "fromCode",
+  toCode: "toCode",
+};
 
-  const [from, setFrom] = useState(10000);
-  const [to, setTo] = useState(defaultToValue);
-  const [fromCode, setFromCode] = useState("CNY");
-  const [toCode, setToCode] = useState("USD");
+const defaultFromValue = 10000.0;
+const defaultFromCode = "CNY";
+const defaultToCode = "USD";
+const defaultProfitPercentage = 5;
+const defaultToValue = getTargetValueByRate({
+  fromValue: defaultFromValue,
+  fromCode: defaultFromCode,
+  toCode: defaultToCode,
+  rates: CONVERSATION_RATES,
+});
+
+export default function HomeScreen() {
+  let timeoutTemp;
+  let timeoutFromValue;
+  const [spaceGapLength, setSpaceGapLength] = useState(0);
+  const [ifPicker, setIfPicker] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [pickerCode, setPickerCode] = useState();
+  const [pickerFor, setPickerFor] = useState();
+
+  const [fromValue, setFromValue] = useState(defaultFromValue);
+  const [toValue, setToValue] = useState(defaultToValue);
+  // const [toCode, setToCode] = useReducer((_prev, next) => {
+  //   console.log("new toCode", next);
+  //   setToValue(
+  //     getTargetValueByRate({
+  //       fromValue,
+  //       fromCode: fromCodeRef,
+  //       toCode: next,
+  //     }).toFixed(2)
+  //   );
+  //   return next;
+  // }, defaultToCode);
+  const [toCode, setToCode] = useState(defaultToCode);
+  const [fromCode, setFromCode] = useState(defaultFromCode);
+  // const [fromCode, setFromCode] = useReducer((_prev, next) => {
+  //   console.log("new fromCode", next);
+
+  //   return next;
+  // }, defaultFromCode);
   const [profitType, setProfitType] = useState(profitTypeOptions.percantage);
   const [profitPercentage, setProfitPercentage] = useState(
     defaultProfitPercentage
@@ -55,9 +97,46 @@ export default function HomeScreen({ navigation }) {
     ((defaultToValue * defaultProfitPercentage) / 100).toFixed(2)
   );
 
+  // toCodeUpdate effect
   useEffect(() => {
-    console.log("useEffect");
+    console.log("useEffect toCode", toCode);
+    setToValue(
+      getTargetValueByRate({
+        fromValue,
+        fromCode,
+        toCode,
+      }).toFixed(2)
+    );
+  }, [toCode, fromCode]);
 
+  // profit effect
+  useEffect(() => {
+    setProfitType(profitTypeOptions.dollar);
+  }, [profitDollar]);
+
+  useEffect(() => {
+    setProfitType(profitTypeOptions.percantage);
+  }, [profitPercentage]);
+
+  useEffect(() => {
+    const toStringLength = toValue.toString().length;
+    const profitLength = getProfit().toString().length;
+    setSpaceGapLength(
+      toStringLength > profitLength ? toStringLength - profitLength : 0
+    );
+  }, [toValue, profitDollar, profitPercentage]);
+
+  useEffect(() => {
+    setToValue(
+      getTargetValueByRate({
+        fromValue,
+        fromCode,
+        toCode,
+      }).toFixed(2)
+    );
+  }, [fromValue]);
+
+  useEffect(() => {
     // const genRate = async () => {
     //   const rsp = await axios
     //     .get
@@ -66,188 +145,257 @@ export default function HomeScreen({ navigation }) {
     //   console.log("rsp", rsp.data);
     // };
     // genRate();
-    setTo(
-      getTargetValueByRate({
-        fromValue: from,
-        fromCode,
-        toCode,
-        rates: CONVERSATION_RATES,
-      }).toFixed(2)
-    );
+    // setToValue(
+    //   getTargetValueByRate({
+    //     fromValue: fromValue,
+    //     fromCode,
+    //     toCode,
+    //     rates: CONVERSATION_RATES,
+    //   }).toFixed(2)
+    // );
   }, []);
 
   const getProfit = () => {
     return parseFloat(
-      profitType === "percentage" ? (to * profitPercentage) / 100 : profitDollar
+      profitType === "percentage"
+        ? (toValue * profitPercentage) / 100
+        : profitDollar
     ).toFixed(2);
   };
 
   const getTotal = () => {
-    return (parseFloat(to) + parseFloat(getProfit())).toFixed(2);
-  };
-
-  const handleToCodeChangeText = (v) => {
-    let code = CURRENCY_CODES[v];
+    return (parseFloat(toValue) + parseFloat(getProfit())).toFixed(2);
   };
 
   const handleFromChangeText = (v) => {
-    const fromValue = parseFloat(v) || 0;
-    setFrom(fromValue);
-    setTo(
-      getTargetValueByRate({
-        fromValue,
-        toCode,
-        fromCode,
-        rates: CONVERSATION_RATES,
-      }).toFixed(2)
-    );
+    setFloatValue(v, setFromValue);
+    const timeoutFromValueTimer = 3000;
+    const timeoutTempTimer = 800;
+    // const newFromValue =
+    //   parseFloat(v.replace(/!(^[+-]?\d+(\.\d+)?$)/g, "")) || 0;
+    // setFromValue(v);
+    // debounce(setFromValue, timeoutFromValueTimer)(parseFloat(v) || 0);
+
+    // clearTimeout(timeoutTemp);
+    // clearTimeout(timeoutFromValue);
+    // timeoutTemp = null;
+    // timeoutFromValue = null;
+    // timeoutTemp = setTimeout(() => {
+    //   setToValue(
+    //     getTargetValueByRate({
+    //       fromValue: newFromValue,
+    //       fromCode,
+    //       toCode,
+    //       rates: CONVERSATION_RATES,
+    //     }).toFixed(2)
+    //   );
+    // }, timeoutTempTimer);
+    // timeoutFromValue = setTimeout(() => {
+    //   console.log("newFromValue", newFromValue);
+    //   setFromValue(newFromValue);
+    // }, timeoutFromValueTimer);
   };
 
-  const handleFromCodeChangeText = (v) => {
-    // setFromCode(v);
-    setModalVisible(true);
+  const updateFromCodeByCode = (code) => {
+    setFromCode(code);
+
+    // const newToValue = getTargetValueByRate({
+    //   fromValue,
+    //   fromCode,
+    //   toCode,
+    // });
+    // console.log("newToValue", newToValue);
+    // setToValue(newToValue);
   };
 
-  const handleFromCodePress = () => {
-    setModalVisible(true);
+  const updateToCodeByCode = (code) => {
+    setToCode(code);
   };
 
-  const handleToChangeText = (v) => {
-    const toValue = parseFloat(v) || 0;
-    setTo(toValue);
-    setFrom(
-      getTargetValueByRate({
-        fromValue: toValue,
-        toCode: fromCode,
-        fromCode: toCode,
-        rates: CONVERSATION_RATES,
-      }).toFixed(2)
-    );
-  };
-
-  const handleSyncValue = (from, to) => {};
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.inputCurrencyGroup}>
-        <View style={styles.inputValue}>
-          <TextInput
-            label="value"
-            value={from.toFixed(2).toString()}
-            onChangeText={handleFromChangeText}
-            fontFamily="Courier New"
-          />
-        </View>
-        <View style={styles.viewCenter}>
-          <Button
-            mode="contained"
-            color="black"
-            onPress={() => {
-              navigation.navigate("CurrencyPicker");
-            }}
-          >
-            {fromCode}
-          </Button>
-        </View>
-        {/* <TextInput
+  return ifPicker ? (
+    <CurrencyPickerScreen
+      pickerCode={pickerCode}
+      onButtonPress={(v) => {
+        setIfPicker(false);
+        pickerFor === pickerForOptions.fromCode
+          ? updateFromCodeByCode(v)
+          : updateToCodeByCode(v);
+      }}
+    />
+  ) : (
+    <View style={{ marginLeft: "auto", marginRight: "auto" }}>
+      <View style={styles.container}>
+        <View style={styles.inputCurrencyGroup}>
+          <View style={styles.inputValue}>
+            <TextInput
+              label="from value"
+              value={fromValue.toString()}
+              onChangeText={handleFromChangeText}
+              fontFamily="Courier New"
+              keyboardType={getNumberPad()}
+              maxLength={14}
+            />
+          </View>
+          <View style={[styles.viewCenter, CommonStyles.view20p]}>
+            <Button
+              mode="contained"
+              color="black"
+              onPress={() => {
+                setPickerCode(fromCode);
+                setIfPicker(true);
+                setPickerFor("fromCode");
+              }}
+            >
+              {fromCode}
+            </Button>
+          </View>
+          {/* <TextInput
           label="currency"
           value={fromCode}
           style={styles.inputCurrency}
           onChangeText={handleFromCodePress}
         /> */}
-      </View>
-      <View style={styles.inputCurrencyGroup}>
-        {/* <TextInput
+        </View>
+        <View style={styles.inputCurrencyGroup}>
+          {/* <TextInput
           style={styles.inputCurrency}
           label="currency"
           value={toCode}
           onChangeText={(v) => setToCode(v)}
         /> */}
-        <View style={styles.inputValue}>
-          <TextInput
-            label="value"
-            value={to.toString()}
-            onChangeText={handleToChangeText}
-            fontFamily="Courier New"
-          />
+          <View style={styles.inputValue}>
+            <TextInput
+              label="to value"
+              value={toValue.toString()}
+              disabled
+              fontFamily="Courier New"
+            />
+          </View>
+          <View style={[styles.viewCenter, CommonStyles.view20p]}>
+            <Button
+              mode="contained"
+              color="black"
+              onPress={() => {
+                setPickerCode(toCode);
+                setIfPicker(true);
+                setPickerFor("toCode");
+              }}
+            >
+              {toCode}
+            </Button>
+          </View>
         </View>
-        <View style={styles.viewCenter}>
+        <RadioButton.Group
+          onValueChange={(v) => setProfitType(v)}
+          value={profitType}
+        >
+          <View style={{ flexDirection: "row" }}>
+            <TextInput
+              style={styles.inputProfit}
+              label="Profit in percentage"
+              value={profitPercentage.toString()}
+              onChangeText={(v) => {
+                setFloatValue(v, setProfitPercentage);
+              }}
+              right={<TextInput.Affix text="%" />}
+            />
+            <View style={styles.inputProfitRadio}>
+              <RadioButton value={profitTypeOptions.percantage} />
+            </View>
+          </View>
+          <View style={{ flexDirection: "row", margin: 4 }}>
+            <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(5)}>
+              5%
+            </Button>
+            <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(10)}>
+              10%
+            </Button>
+            <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(20)}>
+              20%
+            </Button>
+            <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(30)}>
+              30%
+            </Button>
+            <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(50)}>
+              50%
+            </Button>
+          </View>
+          <View style={{ flexDirection: "row" }}>
+            <TextInput
+              style={styles.inputProfit}
+              label="Profit in dollar"
+              value={profitDollar.toString()}
+              onChangeText={(v) => setFloatValue(v, setProfitDollar)}
+              keyboardType={"numeric"}
+              maxLength={14}
+              right={<TextInput.Affix text={toCode} />}
+            />
+            <View style={styles.inputProfitRadio}>
+              <RadioButton value={profitTypeOptions.dollar} />
+            </View>
+          </View>
+          <View style={{ flexDirection: "row" }}>
+            <View style={{ flex: 1, alignItems: "flex-start" }}>
+              <Button style={{}} onPress={() => setProfitDollar(100)}>
+                {formatter(toCode).format(100)}
+              </Button>
+            </View>
+            <View style={{ flex: 1, alignItems: "flex-start" }}>
+              <Button style={{}} onPress={() => setProfitDollar(300)}>
+                {formatter(toCode).format(300)}
+              </Button>
+            </View>
+          </View>
+          <View style={{ flexDirection: "row" }}>
+            <View style={{ flex: 1, alignItems: "flex-start" }}>
+              <Button style={{}} onPress={() => setProfitDollar(1000)}>
+                {formatter(toCode).format(1000)}
+              </Button>
+            </View>
+            <View style={{ flex: 1, alignItems: "flex-start" }}>
+              <Button style={{}} onPress={() => setProfitDollar(3000)}>
+                {formatter(toCode).format(3000)}
+              </Button>
+            </View>
+          </View>
+          <View style={{ flexDirection: "row" }}>
+            <View style={{ flex: 1, alignItems: "flex-start" }}>
+              <Button style={{}} onPress={() => setProfitDollar(10000)}>
+                {formatter(toCode).format(10000)}
+              </Button>
+            </View>
+            <View style={{ flex: 1, alignItems: "flex-start" }}>
+              <Button style={{}} onPress={() => setProfitDollar(30000)}>
+                {formatter(toCode).format(30000)}
+              </Button>
+            </View>
+          </View>
+        </RadioButton.Group>
+        <View style={{ marginVertical: 20 }}>
+          <Text style={styles.textResult}>
+            {parseFloat(toValue).toFixed(2)}
+          </Text>
+          <Text style={styles.textResult}>
+            + {Array.from({ length: spaceGapLength }).fill(" ").join("")}
+            {getProfit()}
+          </Text>
+          <Text style={styles.textResult}>------</Text>
+          <Text style={[styles.textResult, { fontWeight: "500" }]}>
+            {getTotal()}
+          </Text>
+        </View>
+        <View>
           <Button
-            mode="contained"
-            color="black"
+            labelStyle={{ fontSize: 12 }}
             onPress={() => {
-              navigation.navigate("CurrencyPicker");
+              launchURL("mailto:weijingjaylin@gmail.com");
             }}
           >
-            {toCode}
+            Feedback
           </Button>
         </View>
+        <StatusBar style="auto" />
       </View>
-      <RadioButton.Group
-        onValueChange={(v) => setProfitType(v)}
-        value={profitType}
-      >
-        <View style={{ flexDirection: "row" }}>
-          <TextInput
-            style={styles.inputProfit}
-            label="Profit in percentage"
-            value={profitPercentage.toString()}
-            right={<TextInput.Affix text="%" />}
-          />
-          <View style={styles.inputProfitRadio}>
-            <RadioButton value={profitTypeOptions.percantage} />
-          </View>
-        </View>
-        <View style={{ flexDirection: "row", margin: 4 }}>
-          <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(5)}>
-            5%
-          </Button>
-          <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(10)}>
-            10%
-          </Button>
-          <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(20)}>
-            20%
-          </Button>
-          <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(30)}>
-            30%
-          </Button>
-          <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(50)}>
-            50%
-          </Button>
-        </View>
-        <View style={{ flexDirection: "row" }}>
-          <TextInput
-            style={styles.inputProfit}
-            label="Profit in dollar"
-            value={profitDollar.toString()}
-            right={<TextInput.Affix text={toCode} />}
-          />
-          <View style={styles.inputProfitRadio}>
-            <RadioButton value={profitTypeOptions.dollar} />
-          </View>
-        </View>
-      </RadioButton.Group>
-      <View style={{ marginVertical: 20 }}>
-        <Text style={styles.textResult}>{parseFloat(to).toFixed(2)}</Text>
-        <Text style={styles.textResult}>+ {getProfit()}</Text>
-        <Text style={styles.textResult}>---</Text>
-        <Text style={styles.textResult}>{getTotal()}</Text>
-      </View>
-      <View>
-        <Button
-          labelStyle={{ fontSize: 12 }}
-          onPress={() => {
-            launchURL("mailto:weijingjaylin@gmail.com");
-          }}
-        >
-          Feedback
-        </Button>
-      </View>
-      {/* <CurrencyCodePickerModal
-        modalVisible={modalVisible}
-        setModalVisible={setModalVisible}
-      /> */}
-      <StatusBar style="auto" />
     </View>
   );
 }
@@ -274,7 +422,8 @@ const styles = StyleSheet.create({
   textResult: {
     textAlign: "right",
     fontFamily: "Courier New",
-    fontSize: 18,
+    fontSize: 32,
+    fontWeight: "300",
   },
   container: {
     ...Platform.select({
@@ -287,14 +436,11 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
       },
       default: {
-        maxWidth: 520,
-        marginLeft: "auto",
-        marginRight: "auto",
+        width: 520,
       },
     }),
 
     marginTop: 20,
-    flex: 1,
     marginHorizontal: 10,
   },
 });
