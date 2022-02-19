@@ -16,6 +16,7 @@ export function resetToNumber(s): number {
 }
 
 export function setFloatValue(v, fun): void {
+  if (v === null) return null;
   if (v.match(/\./g).length > 1) return null;
   if (/\d|\./.test(v[v.length - 1])) {
     fun(v);

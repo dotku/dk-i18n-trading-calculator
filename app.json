@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "dk-international-trade-calculator",
-    "slug": "dk-international-trade-calculator",
+    "name": "dk-i18n-trade-calculator",
+    "slug": "dk-i18n-trade-calculator",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,12 +13,10 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dotku.dkinternationaltradecalculator"
+      "bundleIdentifier": "com.dotku.dki18ntradecalculator"
     },
     "android": {
       "adaptiveIcon": {
