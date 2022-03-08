@@ -1,11 +1,18 @@
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
 import { TextInput, RadioButton, Button } from "react-native-paper";
 import axios from "axios";
 import { CURRENCY_CODES, CONVERSATION_RATES } from "../../constants";
 import { launchURL } from "../../utils/devices";
-import { formatter, getNumberPad, setFloatValue } from "../../utils/number";
+import { formatter, getNumberPad, setFloat } from "../../utils/number";
 import CurrencyPickerScreen from "../CurrencePicker/CurrencyPickerScreen";
 import { CommonStyles } from "../../styles";
 
@@ -168,7 +175,7 @@ export default function HomeScreen() {
   };
 
   const handleFromChangeText = (v) => {
-    setFloatValue(v, setFromValue);
+    setFloat(v, setFromValue);
     const timeoutFromValueTimer = 3000;
     const timeoutTempTimer = 800;
     // const newFromValue =
@@ -223,180 +230,199 @@ export default function HomeScreen() {
       }}
     />
   ) : (
-    <View style={{ marginLeft: "auto", marginRight: "auto" }}>
-      <View style={styles.container}>
-        <View style={styles.inputCurrencyGroup}>
-          <View style={styles.inputValue}>
-            <TextInput
-              label="from value"
-              value={fromValue.toString()}
-              onChangeText={handleFromChangeText}
-              fontFamily="Courier New"
-              keyboardType={getNumberPad()}
-              maxLength={14}
-            />
-          </View>
-          <View style={[styles.viewCenter, CommonStyles.view20p]}>
-            <Button
-              mode="contained"
-              color="black"
-              onPress={() => {
-                setPickerCode(fromCode);
-                setIfPicker(true);
-                setPickerFor("fromCode");
-              }}
-            >
-              {fromCode}
-            </Button>
-          </View>
-          {/* <TextInput
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={{ marginLeft: "auto", marginRight: "auto" }}>
+        <View style={styles.container}>
+          <View style={styles.inputCurrencyGroup}>
+            <View style={styles.inputValue}>
+              <TextInput
+                label="from value"
+                value={fromValue.toString()}
+                onChangeText={handleFromChangeText}
+                fontFamily="Courier New"
+                keyboardType={getNumberPad()}
+                maxLength={14}
+                onBlur={() => Keyboard.dismiss()}
+              />
+            </View>
+            <View style={[styles.viewCenter, CommonStyles.view25p]}>
+              <Button
+                mode="contained"
+                color="black"
+                onPress={() => {
+                  setPickerCode(fromCode);
+                  setIfPicker(true);
+                  setPickerFor("fromCode");
+                }}
+              >
+                {fromCode}
+              </Button>
+            </View>
+            {/* <TextInput
           label="currency"
           value={fromCode}
           style={styles.inputCurrency}
           onChangeText={handleFromCodePress}
         /> */}
-        </View>
-        <View style={styles.inputCurrencyGroup}>
-          {/* <TextInput
+          </View>
+          <View style={styles.inputCurrencyGroup}>
+            {/* <TextInput
           style={styles.inputCurrency}
           label="currency"
           value={toCode}
           onChangeText={(v) => setToCode(v)}
         /> */}
-          <View style={styles.inputValue}>
-            <TextInput
-              label="to value"
-              value={toValue.toString()}
-              disabled
-              fontFamily="Courier New"
-            />
+            <View style={styles.inputValue}>
+              <TextInput
+                label="to value"
+                value={toValue.toString()}
+                disabled
+                fontFamily="Courier New"
+              />
+            </View>
+            <View style={[styles.viewCenter, CommonStyles.view25p]}>
+              <Button
+                mode="contained"
+                color="black"
+                onPress={() => {
+                  setPickerCode(toCode);
+                  setIfPicker(true);
+                  setPickerFor("toCode");
+                }}
+              >
+                {toCode}
+              </Button>
+            </View>
           </View>
-          <View style={[styles.viewCenter, CommonStyles.view20p]}>
+          <RadioButton.Group
+            onValueChange={(v) => setProfitType(v)}
+            value={profitType}
+          >
+            <View style={{ flexDirection: "row" }}>
+              <TextInput
+                style={styles.inputProfit}
+                label="Profit in percentage"
+                value={profitPercentage.toString()}
+                keyboardType={getNumberPad()}
+                onChangeText={(v) => {
+                  setFloat(v || "0", setProfitPercentage);
+                }}
+                right={<TextInput.Affix text="%" />}
+              />
+              <View style={styles.inputProfitRadio}>
+                <RadioButton value={profitTypeOptions.percantage} />
+              </View>
+            </View>
+            <View style={{ flexDirection: "row", margin: 4 }}>
+              <Button
+                style={{ flex: 1 }}
+                onPress={() => setProfitPercentage(5)}
+              >
+                5%
+              </Button>
+              <Button
+                style={{ flex: 1 }}
+                onPress={() => setProfitPercentage(10)}
+              >
+                10%
+              </Button>
+              <Button
+                style={{ flex: 1 }}
+                onPress={() => setProfitPercentage(20)}
+              >
+                20%
+              </Button>
+              <Button
+                style={{ flex: 1 }}
+                onPress={() => setProfitPercentage(30)}
+              >
+                30%
+              </Button>
+              <Button
+                style={{ flex: 1 }}
+                onPress={() => setProfitPercentage(50)}
+              >
+                50%
+              </Button>
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <TextInput
+                style={styles.inputProfit}
+                label="Profit in dollar"
+                value={profitDollar.toString()}
+                onChangeText={(v) => setFloat(v, setProfitDollar)}
+                keyboardType={"numeric"}
+                maxLength={14}
+                right={<TextInput.Affix text={toCode} />}
+              />
+              <View style={styles.inputProfitRadio}>
+                <RadioButton value={profitTypeOptions.dollar} />
+              </View>
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <View style={{ flex: 1, alignItems: "flex-start" }}>
+                <Button style={{}} onPress={() => setProfitDollar(100)}>
+                  {formatter(toCode).format(100)}
+                </Button>
+              </View>
+              <View style={{ flex: 1, alignItems: "flex-start" }}>
+                <Button style={{}} onPress={() => setProfitDollar(300)}>
+                  {formatter(toCode).format(300)}
+                </Button>
+              </View>
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <View style={{ flex: 1, alignItems: "flex-start" }}>
+                <Button style={{}} onPress={() => setProfitDollar(1000)}>
+                  {formatter(toCode).format(1000)}
+                </Button>
+              </View>
+              <View style={{ flex: 1, alignItems: "flex-start" }}>
+                <Button style={{}} onPress={() => setProfitDollar(3000)}>
+                  {formatter(toCode).format(3000)}
+                </Button>
+              </View>
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <View style={{ flex: 1, alignItems: "flex-start" }}>
+                <Button style={{}} onPress={() => setProfitDollar(10000)}>
+                  {formatter(toCode).format(10000)}
+                </Button>
+              </View>
+              <View style={{ flex: 1, alignItems: "flex-start" }}>
+                <Button style={{}} onPress={() => setProfitDollar(30000)}>
+                  {formatter(toCode).format(30000)}
+                </Button>
+              </View>
+            </View>
+          </RadioButton.Group>
+          <View style={{ marginVertical: 20 }}>
+            <Text style={styles.textResult}>
+              {parseFloat(toValue).toFixed(2)}
+            </Text>
+            <Text style={styles.textResult}>
+              + {Array.from({ length: spaceGapLength }).fill(" ").join("")}
+              {getProfit()}
+            </Text>
+            <Text style={styles.textResult}>------</Text>
+            <Text style={[styles.textResult, { fontWeight: "500" }]}>
+              {getTotal()}
+            </Text>
+          </View>
+          <View>
             <Button
-              mode="contained"
-              color="black"
+              labelStyle={{ fontSize: 12 }}
               onPress={() => {
-                setPickerCode(toCode);
-                setIfPicker(true);
-                setPickerFor("toCode");
+                launchURL("mailto:weijingjaylin@gmail.com");
               }}
             >
-              {toCode}
+              Feedback
             </Button>
           </View>
+          <StatusBar style="auto" />
         </View>
-        <RadioButton.Group
-          onValueChange={(v) => setProfitType(v)}
-          value={profitType}
-        >
-          <View style={{ flexDirection: "row" }}>
-            <TextInput
-              style={styles.inputProfit}
-              label="Profit in percentage"
-              value={profitPercentage.toString()}
-              onChangeText={(v) => {
-                setFloatValue(v, setProfitPercentage);
-              }}
-              right={<TextInput.Affix text="%" />}
-            />
-            <View style={styles.inputProfitRadio}>
-              <RadioButton value={profitTypeOptions.percantage} />
-            </View>
-          </View>
-          <View style={{ flexDirection: "row", margin: 4 }}>
-            <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(5)}>
-              5%
-            </Button>
-            <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(10)}>
-              10%
-            </Button>
-            <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(20)}>
-              20%
-            </Button>
-            <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(30)}>
-              30%
-            </Button>
-            <Button style={{ flex: 1 }} onPress={() => setProfitPercentage(50)}>
-              50%
-            </Button>
-          </View>
-          <View style={{ flexDirection: "row" }}>
-            <TextInput
-              style={styles.inputProfit}
-              label="Profit in dollar"
-              value={profitDollar.toString()}
-              onChangeText={(v) => setFloatValue(v, setProfitDollar)}
-              keyboardType={"numeric"}
-              maxLength={14}
-              right={<TextInput.Affix text={toCode} />}
-            />
-            <View style={styles.inputProfitRadio}>
-              <RadioButton value={profitTypeOptions.dollar} />
-            </View>
-          </View>
-          <View style={{ flexDirection: "row" }}>
-            <View style={{ flex: 1, alignItems: "flex-start" }}>
-              <Button style={{}} onPress={() => setProfitDollar(100)}>
-                {formatter(toCode).format(100)}
-              </Button>
-            </View>
-            <View style={{ flex: 1, alignItems: "flex-start" }}>
-              <Button style={{}} onPress={() => setProfitDollar(300)}>
-                {formatter(toCode).format(300)}
-              </Button>
-            </View>
-          </View>
-          <View style={{ flexDirection: "row" }}>
-            <View style={{ flex: 1, alignItems: "flex-start" }}>
-              <Button style={{}} onPress={() => setProfitDollar(1000)}>
-                {formatter(toCode).format(1000)}
-              </Button>
-            </View>
-            <View style={{ flex: 1, alignItems: "flex-start" }}>
-              <Button style={{}} onPress={() => setProfitDollar(3000)}>
-                {formatter(toCode).format(3000)}
-              </Button>
-            </View>
-          </View>
-          <View style={{ flexDirection: "row" }}>
-            <View style={{ flex: 1, alignItems: "flex-start" }}>
-              <Button style={{}} onPress={() => setProfitDollar(10000)}>
-                {formatter(toCode).format(10000)}
-              </Button>
-            </View>
-            <View style={{ flex: 1, alignItems: "flex-start" }}>
-              <Button style={{}} onPress={() => setProfitDollar(30000)}>
-                {formatter(toCode).format(30000)}
-              </Button>
-            </View>
-          </View>
-        </RadioButton.Group>
-        <View style={{ marginVertical: 20 }}>
-          <Text style={styles.textResult}>
-            {parseFloat(toValue).toFixed(2)}
-          </Text>
-          <Text style={styles.textResult}>
-            + {Array.from({ length: spaceGapLength }).fill(" ").join("")}
-            {getProfit()}
-          </Text>
-          <Text style={styles.textResult}>------</Text>
-          <Text style={[styles.textResult, { fontWeight: "500" }]}>
-            {getTotal()}
-          </Text>
-        </View>
-        <View>
-          <Button
-            labelStyle={{ fontSize: 12 }}
-            onPress={() => {
-              launchURL("mailto:weijingjaylin@gmail.com");
-            }}
-          >
-            Feedback
-          </Button>
-        </View>
-        <StatusBar style="auto" />
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -405,13 +431,13 @@ const styles = StyleSheet.create({
   inputCurrency: { margin: 4, marginLeft: 0, width: "30%" },
   inputValue: {
     marginVertical: 4,
-    width: "80%",
+    width: "75%",
   },
-  inputProfit: { marginVertical: 4, width: "80%" },
+  inputProfit: { marginVertical: 4, width: "75%" },
   inputProfitRadio: {
     alignItems: "center",
     padding: 4,
-    width: "20%",
+    width: "25%",
     justifyContent: "center",
   },
   viewCenter: {
@@ -436,7 +462,8 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
       },
       default: {
-        width: 520,
+        // maxWidth: 520,
+        // minWidth: 320,
       },
     }),
 

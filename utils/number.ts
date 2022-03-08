@@ -15,9 +15,9 @@ export function resetToNumber(s): number {
   return isNaN(s) ? 0 : parseFloat(s);
 }
 
-export function setFloatValue(v, fun): void {
-  if (v === null) return null;
-  if (v.match(/\./g).length > 1) return null;
+export function setFloat(v, fun): void {
+  if (v.length > 1 && v[0] === "0" && v[1] !== ".") v = v.slice(1);
+  if (v.match(/\./g)?.length > 1) return;
   if (/\d|\./.test(v[v.length - 1])) {
     fun(v);
   }

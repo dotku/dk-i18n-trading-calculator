@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "dk-i18n-trade-calculator",
-    "slug": "dk-i18n-trade-calculator",
-    "version": "1.0.0",
+    "name": "ZY I18N Trade Calculator",
+    "slug": "zy-i18n-trade-calculator",
+    "version": "0.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -16,7 +16,8 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dotku.dki18ntradecalculator"
+      "bundleIdentifier": "com.dotku.zyi18ntradecalculator",
+      "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {

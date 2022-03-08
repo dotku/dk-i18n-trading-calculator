@@ -2,18 +2,19 @@ import { View, Text } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { Button } from "react-native-paper";
 import { CURRENCY_CODES } from "../../constants";
+import { CommonStyles } from "../../styles";
 
-export default function CurrencyPickerScreen() {
+export default function CurrencyPickerScreen({ onButtonPress, pickerCode }) {
   return (
-    <ScrollView>
+    <ScrollView style={{ marginTop: 12 }}>
       <Text style={{ margin: 8, fontSize: 16 }}>Common Used Currncies: </Text>
       <View
         style={{
           flexDirection: "row",
           flexWrap: "wrap",
           justifyContent: "center",
-          borderBottomColor: "gray",
-          borderBottomWidth: 1,
+          borderBottomColor: "#ccc",
+          borderBottomWidth: 0.5,
         }}
       >
         {[
@@ -24,11 +25,12 @@ export default function CurrencyPickerScreen() {
         ].map((item, key) => (
           <Button
             key={key}
-            mode="outlined"
+            mode={pickerCode === item ? "contained" : "outlined"}
             style={{
               margin: 8,
             }}
-            onPress={() => alert("hi")}
+            color={pickerCode === item ? "black" : ""}
+            onPress={() => onButtonPress(item)}
           >
             {item}
           </Button>
@@ -46,11 +48,12 @@ export default function CurrencyPickerScreen() {
           {Object.keys(CURRENCY_CODES).map((item, key) => (
             <Button
               key={key}
-              mode="outlined"
+              mode={pickerCode === item ? "contained" : "outlined"}
               style={{
                 margin: 8,
               }}
-              onPress={() => alert("hi")}
+              color={pickerCode === item ? "black" : ""}
+              onPress={() => onButtonPress(item)}
             >
               {item}
             </Button>

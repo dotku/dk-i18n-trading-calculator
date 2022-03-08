@@ -13,7 +13,7 @@ function App() {
           name="Home"
           component={HomeScreen}
           options={{
-            title: "International Trading Calculator",
+            title: "ZY International Trading Calculator",
             headerTitleAlign: "center",
           }}
         />
